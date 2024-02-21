@@ -1,0 +1,3 @@
+[submodule "GPU-accelerated-vector-graphics/vendor/OpenGL_startup_project"]
+	path = GPU-accelerated-vector-graphics/vendor/OpenGL_startup_project
+	url = git@github.com:SedenionProj/OpenGL_startup_project.git
