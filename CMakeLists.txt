@@ -36,5 +36,6 @@ target_include_directories(VectorGraphics PRIVATE ${SOURCE_OPENGL}/vendor/stb)
 # imgui
 target_include_directories(VectorGraphics PRIVATE ${SOURCE_OPENGL}/vendor/imgui)
 
-
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
+add_custom_command(TARGET VectorGraphics POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/GPU-accelerated-vector-graphics/assets ${CMAKE_BINARY_DIR}/assets)
