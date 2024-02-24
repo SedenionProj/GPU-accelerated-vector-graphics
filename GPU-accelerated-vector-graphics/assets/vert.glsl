@@ -11,6 +11,7 @@ uniform float u_thickness;
 
 void main()
 {
+    // borrowed from https://stackoverflow.com/questions/3484260/opengl-line-width
     int line_i = gl_VertexID / 6;
     int tri_i  = gl_VertexID % 6;
 
