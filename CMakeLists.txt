@@ -19,6 +19,7 @@ add_executable(VectorGraphics ${SOURCES})
 
 add_subdirectory(GPU-accelerated-vector-graphics/vendor/OpenGL_startup_project)
 target_link_libraries(VectorGraphics glfw)
+target_link_libraries(VectorGraphics freetype)
 
 target_include_directories(VectorGraphics PRIVATE ${SOURCE_OPENGL})
 target_include_directories(VectorGraphics PRIVATE ${SOURCE_OPENGL}/source)

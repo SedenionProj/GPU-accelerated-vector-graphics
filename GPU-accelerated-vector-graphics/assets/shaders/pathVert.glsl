@@ -9,6 +9,8 @@ uniform mat4  u_mvp;
 uniform vec2  u_resolution;
 uniform float u_thickness;
 
+out vec2 texCoord;
+
 void main()
 {
     // borrowed from https://stackoverflow.com/questions/3484260/opengl-line-width
@@ -44,7 +46,11 @@ void main()
         pos.xy += v_miter * u_thickness * (tri_i == 5 ? 0.5 : -0.5) / dot(v_miter, nv_line);
     }
 
+    
+
     pos.xy = pos.xy / u_resolution * 2.0 - 1.0;
     pos.xyz *= pos.w;
     gl_Position = pos;
+
+    texCoord = pos.xy;
 }
