@@ -96,6 +96,7 @@ int main()
 	Seden::initGui();
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	FT_Library library;
 	FT_Face face;
@@ -108,17 +109,19 @@ int main()
 
 	FT_Set_Pixel_Sizes(face, 0, 48);
 
-	FT_Load_Char(face, '%', FT_LOAD_RENDER);
+	FT_Load_Char(face, '@', FT_LOAD_RENDER);
 
-	std::vector<glm::vec2> points;
-
+	std::vector<glm::vec4> points;
+	
 	auto outline = face->glyph->outline;
 	std::cout << outline.n_contours << "\n";
 	for (int i = 0; i < outline.n_points; i++) {
-		std::cout << outline.points[i].x << " " << outline.points[i].y << "\n";
-		points.push_back({ outline.points[i].x/2500.f,outline.points[i].y / 2500.f, });
+		int p = outline.tags[i] == FT_CURVE_TAG_ON ? 1 : outline.tags[i] == FT_CURVE_TAG_CONIC ? 2 : 1;
+		std::cout << outline.points[i].x << " " << outline.points[i].y << " " << p << "\n";
+		points.push_back({ outline.points[i].x/2500.f-0.5,outline.points[i].y / 2500.f-0.5, p, p});
 	}
-	
+	outline.tags[0] == FT_CURVE_TAG_ON;
+
 	//points.push_back({ 0, 0 });
 	//points.push_back({1, 0});
 	//points.push_back({1, 1});
@@ -129,10 +132,12 @@ int main()
 
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * points.size(), &points[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * points.size(), &points[0], GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FLOAT, sizeof(glm::vec2), (void*)0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FLOAT, sizeof(glm::vec4), (void*)0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FLOAT, sizeof(glm::vec4), (void*)sizeof(glm::vec2));
 	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 
 	Shader basicSh("assets/shaders/basicVert.glsl", "assets/shaders/basicFrag.glsl");
 
@@ -146,6 +151,7 @@ int main()
 		basicSh.Bind();
 		basicSh.setMat4("projection", projection);
 		glBindVertexArray(vao);
+		glDrawArrays(GL_POINTS, 0, points.size());
 		glDrawArrays(GL_LINE_STRIP, 0, points.size());
 
 		Seden::drawGui();
