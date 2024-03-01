@@ -15,26 +15,33 @@ GLuint CreateSSBO(const std::vector<glm::vec4>& varray)
 }
 
 
-class LineStrip {
+class Path {
 public:
-	LineStrip() = default;
+	Path() = default;
 
-	LineStrip(const std::vector<glm::vec4>& vert, float tickness) : t(1) {
+	Path(const std::vector<glm::vec4>& vert, float tickness) : t(0) {
 		vertices = vert;
 		ssbo = CreateSSBO(vert);
+		length = 0;
+		LastT = 0;
+		for (int i = 1; i < vertices.size() - 2; i++) {
+			glm::vec2 seg = vertices[i + 1] - vertices[i];
+			length += glm::sqrt(seg.x*seg.x+seg.y*seg.y);
+			std::cout << glm::sqrt(seg.x * seg.x + seg.y * seg.y) << "\n";
+		}
 	}
 
 	void draw() {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
 		int nb_lines = size() - 3;
-		int nb_triangles = 6 * int(floor(nb_lines * t) + 1) ;
+		int nb_triangles = 6 * int(floor(nb_lines * t) + 1);
 		//int nb_triangles_new = nb_triangles % 6 == 0 ? nb_triangles : nb_triangles + 3;
 		glDrawArrays(GL_TRIANGLES, 0, nb_triangles);
 	}
 
-	void point(int pos, const glm::vec4& data) {
+	void update(int pos, const glm::vec4& data) {
 		vertices[pos] = data;
-		update(pos, data);
+		updatePath(pos, data);
 	}
 
 	int size() {
@@ -43,51 +50,55 @@ public:
 
 	void trim(float t1) {
 		if (t <= 1) {
-			t = t1;
+
+			float seg_i = int((size() - 3) * t)+1;
+
+			float subdivisions = 1.f / (size() - 3);
+
+			glm::vec2 seg = vertices[seg_i + 1] - vertices[seg_i];
+			float seg_len = glm::sqrt(seg.x * seg.x + seg.y * seg.y)/length;
+			
+			float speed = subdivisions/seg_len;
+
+			float dt = (t1 - LastT);
+
+			LastT = t1;
+
+			t += dt*speed;
+			std::cout <<  "\n";
+			////std::cout << seg_i << "\n";
+			//std::cout << length << "\n";
+			////std::cout << glm::sqrt(seg.x * seg.x + seg.y * seg.y) << "\n";
+			//std::cout << seg_len << "\n";
+			std::cout << speed << "\n";
+			
+
+
 
 			float x = (size() - 3) * t;
 
-			int line1 = int(x)+1;
-			int line2 = line1 +1;
+			int line1 = int(x) + 1;
+			int line2 = line1 + 1;
 
-			linetest = line1;
 
 			float seg_t = x - floor(x);
 
-			seg2 = seg_t;
+			glm::vec4 interpolated = (1.f - seg_t) * vertices[line1] + (seg_t)*vertices[line2];
 
-			glm::vec4 interpolated = (1.f - seg_t) * vertices[line1] + (seg_t) * vertices[line2];
-
-			update(line2, interpolated);
+			updatePath(line2, interpolated);
 		}
 	}
-	float seg2;
-	int linetest;
-
+	float LastT;
 	float t;
+	float length;
 protected:
-	void update(int pos, const glm::vec4& data) {
+	void updatePath(int pos, const glm::vec4& data) {
 		//vertices[pos] = data;
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * pos, sizeof(glm::vec4), glm::value_ptr(data));
 	}
 	std::vector<glm::vec4> vertices;
 	int ssbo;
-};
-
-class QuadraticBezier: public LineStrip {
-public:
-	QuadraticBezier(glm::vec4 p0, glm::vec4 p1, glm::vec4 p2) {
-		std::vector<glm::vec4> vert;
-		for (float t = 0; t < 1; t += 0.01) {
-			glm::vec4 pos = (1 - t) * (1 - t) * p0 + (1 - t) * 2 * t * p1 + t * t * p2;
-			vert.push_back(pos);
-		}
-
-		t = 1;
-		vertices = vert;
-		ssbo = CreateSSBO(vert);
-	}
 };
 
 int main()
@@ -98,61 +109,51 @@ int main()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
-	FT_Library library;
-	FT_Face face;
+	float aspect = 1280.f / 720.f;
 
-	if (FT_Init_FreeType(&library))
-		std::cout << "error freetype\n";
+	Shader basicSh("assets/shaders/pathVert.glsl", "assets/shaders/pathFrag.glsl");
+	auto projection = glm::ortho(-aspect, aspect, -1.0f, 1.0f, -10.0f, 10.0f);
 
-	if (FT_New_Face(library, "assets/fonts/arial.ttf", 0, &face))
-		std::cout << "error font\n";
+	std::vector<glm::vec4> varray = { {-1,0,0,1}, {-0.9,0,0,1}, {0.5,0,0,1}, {0.5, 0.1, 0, 1}, {1, 0.1, 0, 1}, {1.1,0.1,0,1} };
+	Path path(varray, 10);
 
-	FT_Set_Pixel_Sizes(face, 0, 48);
-
-	FT_Load_Char(face, '@', FT_LOAD_RENDER);
-
-	std::vector<glm::vec4> points;
-	
-	auto outline = face->glyph->outline;
-	std::cout << outline.n_contours << "\n";
-	for (int i = 0; i < outline.n_points; i++) {
-		int p = outline.tags[i] == FT_CURVE_TAG_ON ? 1 : outline.tags[i] == FT_CURVE_TAG_CONIC ? 2 : 1;
-		std::cout << outline.points[i].x << " " << outline.points[i].y << " " << p << "\n";
-		points.push_back({ outline.points[i].x/2500.f-0.5,outline.points[i].y / 2500.f-0.5, p, p});
-	}
-	outline.tags[0] == FT_CURVE_TAG_ON;
-
-	//points.push_back({ 0, 0 });
-	//points.push_back({1, 0});
-	//points.push_back({1, 1});
-
-	GLuint vao, vbo;
+	GLuint vao;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * points.size(), &points[0], GL_STATIC_DRAW);
+	float t = 0.0;
 
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FLOAT, sizeof(glm::vec4), (void*)0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FLOAT, sizeof(glm::vec4), (void*)sizeof(glm::vec2));
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-
-	Shader basicSh("assets/shaders/basicVert.glsl", "assets/shaders/basicFrag.glsl");
-
-	auto projection = glm::ortho(0, 1280, 0, 720);
+	float last = 0;
 
 	while (Seden::isRunning())
 	{
+		float newt = glfwGetTime();
+		float dt = newt - last;
+		last = newt;
+
+
 		Seden::clear();
 		Seden::clearGui();
 
+		ImGui::Begin("test");
+		ImGui::Text(std::to_string(path.t).c_str());
+		ImGui::Text(std::to_string(glfwGetTime()).c_str());
+		ImGui::End();
+
+		t = 1.+glfwGetTime() / 10.f;
+		
+
 		basicSh.Bind();
-		basicSh.setMat4("projection", projection);
-		glBindVertexArray(vao);
-		glDrawArrays(GL_POINTS, 0, points.size());
-		glDrawArrays(GL_LINE_STRIP, 0, points.size());
+		basicSh.setMat4("u_mvp", projection);
+		basicSh.setVec2("u_resolution", {1280, 720});
+		basicSh.setFloat("u_thickness", 10);
+
+		path.trim(1.);
+
+		
+
+		path.draw();
+
 
 		Seden::drawGui();
 		Seden::display();
@@ -160,6 +161,6 @@ int main()
 
 	Seden::terminate();
 	Seden::closeGui();
-	FT_Done_Face(face);
-	FT_Done_FreeType(library);
+	//FT_Done_Face(face);
+	//FT_Done_FreeType(library);
 }
