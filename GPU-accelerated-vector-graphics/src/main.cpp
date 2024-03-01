@@ -22,11 +22,10 @@ public:
 	Path(const std::vector<glm::vec4>& vert, float tickness) : t(0) {
 		vertices = vert;
 		ssbo = CreateSSBO(vert);
-		length = 0;
-		LastT = 0;
+		pathLength = 0;
 		for (int i = 1; i < vertices.size() - 2; i++) {
 			glm::vec2 seg = vertices[i + 1] - vertices[i];
-			length += glm::sqrt(seg.x*seg.x+seg.y*seg.y);
+			pathLength += glm::sqrt(seg.x*seg.x+seg.y*seg.y);
 			std::cout << glm::sqrt(seg.x * seg.x + seg.y * seg.y) << "\n";
 		}
 	}
@@ -50,28 +49,34 @@ public:
 
 	void trim(float t1) {
 		if (t <= 1) {
+			int seg_i = 0;
+			float totalLen = 0;
+			float inf = 0;
+			float sup = 0;
+			for (int i = 1; i < size() - 2; i++) {
+				
+				glm::vec2 p1 = vertices[i];
+				glm::vec2 p2 = vertices[i+1];
+				glm::vec2 seg = p2 - p1;
+				
+				
+				float len = glm::sqrt(seg.x * seg.x + seg.y * seg.y)/ pathLength;
 
-			float seg_i = int((size() - 3) * t)+1;
+				inf = totalLen;
+				sup = totalLen + len;
+
+				seg_i += 1;
+
+				if (t1>=inf && t1<=sup) {
+					break;
+				}
+				
+				totalLen += len;
+			}
 
 			float subdivisions = 1.f / (size() - 3);
 
-			glm::vec2 seg = vertices[seg_i + 1] - vertices[seg_i];
-			float seg_len = glm::sqrt(seg.x * seg.x + seg.y * seg.y)/length;
-			
-			float speed = subdivisions/seg_len;
-
-			float dt = (t1 - LastT);
-
-			LastT = t1;
-
-			t += dt*speed;
-			std::cout <<  "\n";
-			////std::cout << seg_i << "\n";
-			//std::cout << length << "\n";
-			////std::cout << glm::sqrt(seg.x * seg.x + seg.y * seg.y) << "\n";
-			//std::cout << seg_len << "\n";
-			std::cout << speed << "\n";
-			
+			t = ((seg_i-1)+(t1 - inf)/(sup-inf))*subdivisions;
 
 
 
@@ -88,12 +93,10 @@ public:
 			updatePath(line2, interpolated);
 		}
 	}
-	float LastT;
 	float t;
-	float length;
+	float pathLength;
 protected:
 	void updatePath(int pos, const glm::vec4& data) {
-		//vertices[pos] = data;
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * pos, sizeof(glm::vec4), glm::value_ptr(data));
 	}
@@ -140,7 +143,7 @@ int main()
 		ImGui::Text(std::to_string(glfwGetTime()).c_str());
 		ImGui::End();
 
-		t = 1.+glfwGetTime() / 10.f;
+		t = glfwGetTime();
 		
 
 		basicSh.Bind();
@@ -148,7 +151,7 @@ int main()
 		basicSh.setVec2("u_resolution", {1280, 720});
 		basicSh.setFloat("u_thickness", 10);
 
-		path.trim(1.);
+		path.trim(cos(t)/2.f + 0.5);
 
 		
 
