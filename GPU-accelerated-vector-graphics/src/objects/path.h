@@ -15,10 +15,8 @@ public:
 	Path() = default;
 
 	Path(const std::vector<glm::vec4>& vert, float tickness){
-		vertices = vert;
-		ssbo = CreateSSBO(vert);
-		computeLength();
 		
+		init(vert);
 	}
 
 	void draw() {
@@ -164,6 +162,12 @@ protected:
 	int lastTbegin = 0;
 	int lastTend = 1;
 
+	void init(const std::vector<glm::vec4>& vert) {
+		vertices = vert;
+		ssbo = CreateSSBO(vert);
+		computeLength();
+	}
+
 	void computeLength() {
 		for (int i = 1; i < vertices.size() - 2; i++) {
 			glm::vec2 seg = vertices[i + 1] - vertices[i];
@@ -183,15 +187,13 @@ class QuadraticBezier : public Path {
 public:
 	QuadraticBezier(glm::vec4 p0, glm::vec4 p1, glm::vec4 p2) {
 		std::vector<glm::vec4> vert;
-		float subdivisions = 0.1;
+		float subdivisions = 0.05;
 		for (float t = -subdivisions; t <= 1 + subdivisions*2; t += subdivisions) {
 
 			glm::vec4 pos = (1 - t) * (1 - t) * p0 + (1 - t) * 2 * t * p1 + t * t * p2;
 			vert.push_back(pos);
 		}
-		vertices = vert;
-		ssbo = CreateSSBO(vert);
-		computeLength();
-
+		
+		init(vert);
 	}
 };

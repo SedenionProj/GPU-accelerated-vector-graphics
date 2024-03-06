@@ -19,7 +19,8 @@ int main()
 	float aspect = 1280.f / 720.f;
 
 	Shader basicSh("assets/shaders/pathVert.glsl", "assets/shaders/pathFrag.glsl");
-	auto projection = glm::ortho(-aspect, aspect, -1.0f, 1.0f, -10.0f, 10.0f);
+
+	Seden::OrthographicCamera cam(aspect);
 
 	std::vector<glm::vec4> varray {{-1,1,0,1}, {-0.5,0,0,1} , {0.5,0,0,1} , {1,1,0,1} };
 
@@ -32,7 +33,9 @@ int main()
 	glBindVertexArray(vao);
 
 	float t = 0.0;
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	
 	float begin=0;
 	float end = 1;
 	while (Seden::win::isRunning())
@@ -55,12 +58,13 @@ int main()
 		ImGui::SliderFloat("end", &end, 0.f, 1.f);
 		ImGui::End();
 
-		t += .001;
+		t += .0001;
 		
+		cam.setZoom(t);
 
 		basicSh.Bind();
-		basicSh.setMat4("u_mvp", projection);
-		basicSh.setVec2("u_resolution", {1280, 720});
+		basicSh.setMat4("u_mvp", cam.getViewProjection());
+		basicSh.setVec2("u_resolution", {1280*t, 720*t});
 		basicSh.setFloat("u_thickness", 50);
 
 
