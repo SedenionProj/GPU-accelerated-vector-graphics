@@ -21,8 +21,11 @@ int main()
 	Shader basicSh("assets/shaders/pathVert.glsl", "assets/shaders/pathFrag.glsl");
 	auto projection = glm::ortho(-aspect, aspect, -1.0f, 1.0f, -10.0f, 10.0f);
 
-	std::vector<glm::vec4> varray = { {-1,0,0,1}, {-0.9,0,0,1}, {0.5,0,0,1}, {0.5, 0.1, 0, 1}, {1, 0.1, 0, 1}, {1.1, 0.5, 0, 1}, {1.5, 0.7, 0, 1}, {1.7, 0.0, 0, 1} };
+	std::vector<glm::vec4> varray {{-1,1,0,1}, {-0.5,0,0,1} , {0.5,0,0,1} , {1,1,0,1} };
+
 	Path path(varray, 10);
+
+	QuadraticBezier bezier({ glm::vec4(0,0,0,1),glm::vec4(0.5,0,0,1),glm::vec4(1,1,0,1) });
 
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
@@ -58,14 +61,21 @@ int main()
 		basicSh.Bind();
 		basicSh.setMat4("u_mvp", projection);
 		basicSh.setVec2("u_resolution", {1280, 720});
-		basicSh.setFloat("u_thickness", 10);
+		basicSh.setFloat("u_thickness", 50);
 
-		
+
 		path.trimBegin(begin);
 		path.trimEnd(end);
+		//
+		bezier.trimBegin(begin);
+		bezier.trimEnd(end);
 		
+		bezier.draw();
 
-		path.draw();
+
+		//path.draw();
+
+		
 		
 		Seden::win::drawGui();
 		Seden::win::display();

@@ -17,11 +17,8 @@ public:
 	Path(const std::vector<glm::vec4>& vert, float tickness){
 		vertices = vert;
 		ssbo = CreateSSBO(vert);
-		pathLength = 0;
-		for (int i = 1; i < vertices.size() - 2; i++) {
-			glm::vec2 seg = vertices[i + 1] - vertices[i];
-			pathLength += glm::sqrt(seg.x * seg.x + seg.y * seg.y);
-		}
+		computeLength();
+		
 	}
 
 	void draw() {
@@ -29,12 +26,12 @@ public:
 		int nb_lines = getSegmentNumber();
 		int triangles_end_nb = 6 * int(floor(nb_lines * tEnd) + 1);
 		int triangles_begin_nb = 6 * int(floor(nb_lines * tBegin));
-		
 		glDrawArrays(GL_TRIANGLES, triangles_begin_nb, triangles_end_nb - triangles_begin_nb);
 	}
 
 	void update(int pos, const glm::vec4& data) {
 		vertices[pos] = data;
+		computeLength(); // can be optimized
 		updatePath(pos, data);
 	}
 
@@ -54,9 +51,7 @@ public:
 			return;
 		}
 
-		
-
-		if (tEnd <= 1) {
+		if (tPathEnd < 1) {
 			int segment_i = 0;
 			float trimlLen = 0;
 			float inf = 0;
@@ -92,8 +87,10 @@ public:
 			int line2 = line1 + 1;
 			float seg_t = whichSeg - floor(whichSeg);
 			glm::vec4 interpolated = (1.f - seg_t) * vertices[line1] + (seg_t)*vertices[line2];
+			
 			updatePath(lastTend, vertices[lastTend]);
 			updatePath(line2, interpolated);
+			
 			lastTend = line2;
 		}
 	}
@@ -107,7 +104,7 @@ public:
 		}
 
 		
-		if (tBegin <= 1) {
+		if (tPathBegin>=0) {
 			int segment_i = 0;
 			float trimlLen = 0;
 			float inf = 0;
@@ -150,23 +147,51 @@ public:
 		}
 	}
 	
-	float pathLength;
+	float pathLength = 0;
 
 	static Shader shader;
 
 protected:
+	// trim path values input by user
 	float tPathBegin = 0;
 	float tPathEnd = 1;
 
+	// converted trim path values
 	float tBegin = 0;
-	int lastTbegin = 0;
-
 	float tEnd = 1;
+	
+	// last trim path values for a bug fix
+	int lastTbegin = 0;
 	int lastTend = 1;
+
+	void computeLength() {
+		for (int i = 1; i < vertices.size() - 2; i++) {
+			glm::vec2 seg = vertices[i + 1] - vertices[i];
+			pathLength += glm::sqrt(seg.x * seg.x + seg.y * seg.y);
+		}
+	}
+
 	void updatePath(int pos, const glm::vec4& data) {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * pos, sizeof(glm::vec4), glm::value_ptr(data));
 	}
 	std::vector<glm::vec4> vertices;
 	int ssbo;
+};
+
+class QuadraticBezier : public Path {
+public:
+	QuadraticBezier(glm::vec4 p0, glm::vec4 p1, glm::vec4 p2) {
+		std::vector<glm::vec4> vert;
+		float subdivisions = 0.1;
+		for (float t = -subdivisions; t <= 1 + subdivisions*2; t += subdivisions) {
+
+			glm::vec4 pos = (1 - t) * (1 - t) * p0 + (1 - t) * 2 * t * p1 + t * t * p2;
+			vert.push_back(pos);
+		}
+		vertices = vert;
+		ssbo = CreateSSBO(vert);
+		computeLength();
+
+	}
 };
