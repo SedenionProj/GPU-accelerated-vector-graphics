@@ -56,11 +56,11 @@ public:
 			float sup = 0;
 			for (int i = 1; i < size() - 2; i++) {
 
-				glm::vec2 p1 = vertices[i];
-				glm::vec2 p2 = vertices[i + 1];
-				glm::vec2 seg = p2 - p1;
+				glm::vec3 p1 = vertices[i];
+				glm::vec3 p2 = vertices[i + 1];
+				glm::vec3 seg = p2 - p1;
 
-				float len = glm::sqrt(seg.x * seg.x + seg.y * seg.y) / pathLength;
+				float len = glm::length(seg) / pathLength;
 
 				inf = trimlLen;
 				sup = trimlLen + len;
@@ -109,11 +109,11 @@ public:
 			float sup = 0;
 			for (int i = 1; i < size() - 2; i++) {
 
-				glm::vec2 p1 = vertices[i];
-				glm::vec2 p2 = vertices[i + 1];
-				glm::vec2 seg = p2 - p1;
+				glm::vec3 p1 = vertices[i];
+				glm::vec3 p2 = vertices[i + 1];
+				glm::vec3 seg = p2 - p1;
 
-				float len = glm::sqrt(seg.x * seg.x + seg.y * seg.y) / pathLength;
+				float len = glm::length(seg) / pathLength;
 
 				inf = trimlLen;
 				sup = trimlLen + len;
@@ -170,8 +170,8 @@ protected:
 
 	void computeLength() {
 		for (int i = 1; i < vertices.size() - 2; i++) {
-			glm::vec2 seg = vertices[i + 1] - vertices[i];
-			pathLength += glm::sqrt(seg.x * seg.x + seg.y * seg.y);
+			glm::vec3 seg = vertices[i + 1] - vertices[i];
+			pathLength += glm::length(seg);
 		}
 	}
 

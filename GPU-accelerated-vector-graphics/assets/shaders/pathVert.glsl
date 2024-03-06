@@ -35,7 +35,10 @@ void main()
         vec2 v_miter = normalize(nv_line + vec2(-v_pred.y, v_pred.x));
 
         pos = va[1];
-        pos.xy += v_miter * u_thickness * (tri_i == 1 ? -0.5 : 0.5) / dot(v_miter, nv_line);
+
+        float angle = dot(v_miter, nv_line);
+
+        pos.xy += v_miter * u_thickness * (tri_i == 1 ? -0.5 : 0.5) / max(angle, 0.2); // temp miter fix 
     }
     else
     {
@@ -43,7 +46,10 @@ void main()
         vec2 v_miter = normalize(nv_line + vec2(-v_succ.y, v_succ.x));
 
         pos = va[2];
-        pos.xy += v_miter * u_thickness * (tri_i == 5 ? 0.5 : -0.5) / dot(v_miter, nv_line);
+
+        float angle = dot(v_miter, nv_line);
+
+        pos.xy += v_miter * u_thickness * (tri_i == 5 ? 0.5 : -0.5) / max(angle, 0.2);
     }
 
     

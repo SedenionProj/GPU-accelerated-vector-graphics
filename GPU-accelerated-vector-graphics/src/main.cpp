@@ -66,7 +66,7 @@ int main()
 		basicSh.Bind();
 		basicSh.setMat4("u_mvp", cam.getProjectionMatrix()*cam.getViewMatrix());
 		basicSh.setVec2("u_resolution", {1280* glm::length(cam.getPosition()), 720 * glm::length(cam.getPosition())});
-		basicSh.setFloat("u_thickness", 10);
+		basicSh.setFloat("u_thickness", 25);
 
 
 		path.trimBegin(begin);
