@@ -15,6 +15,7 @@ int main()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_PROGRAM_POINT_SIZE);
+	glEnable(GL_DEPTH_TEST);
 
 	float aspect = 1280.f / 720.f;
 
@@ -22,11 +23,17 @@ int main()
 
 	Seden::PerspectiveCamera cam(aspect);
 
-	std::vector<glm::vec4> varray {{-1,1,0,1}, {-0.5,0,0,1} , {0.5,0,0,1}  , {0.5,0,1,1}, {0.5,1,1,1}, {1,1,1,1}};
+	std::vector<vertex> varray {
+		{{-1,0,0,1},   {1,0,0,1}},
+		{{-0.5,0,0,1}, {1,0,0,1}},
+		{{0.5,0,0,1},  {0,1,0,1}},
+		{{0.5,0,1,1},  {0,0,1,1}},
+		{{0.5,1,1,1},  {1,0,0,1}},
+		{{0.5,2,1,1},  {1,0,0,1}}
+	};
 
 	Path path(varray, 10);
 
-	QuadraticBezier bezier({ glm::vec4(0,0,0,1),glm::vec4(0.5,0,0,1),glm::vec4(1,1,0,1) });
 
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
@@ -68,14 +75,10 @@ int main()
 		basicSh.setVec2("u_resolution", {1280* glm::length(cam.getPosition()), 720 * glm::length(cam.getPosition())});
 		basicSh.setFloat("u_thickness", 25);
 
-
 		path.trimBegin(begin);
 		path.trimEnd(end);
-		//
-		bezier.trimBegin(begin);
-		bezier.trimEnd(end);
-		
-		//bezier.draw();
+
+
 
 
 		path.draw();

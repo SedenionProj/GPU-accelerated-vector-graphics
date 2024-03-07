@@ -1,8 +1,13 @@
 #version 460
 
+struct Vertex {
+	vec4 position;
+	vec4 color;
+};
+
 layout(std430, binding = 0) buffer TVertex
 {
-   vec4 vertex[]; 
+   Vertex vertex[]; 
 };
 
 uniform mat4  u_mvp;
@@ -10,6 +15,7 @@ uniform vec2  u_resolution;
 uniform float u_thickness;
 
 out vec2 texCoord;
+out vec4 color;
 
 void main()
 {
@@ -17,10 +23,12 @@ void main()
     int line_i = gl_VertexID / 6;
     int tri_i  = gl_VertexID % 6;
 
+    
+
     vec4 va[4];
     for (int i=0; i<4; ++i)
     {
-        va[i] = u_mvp * vertex[line_i+i];
+        va[i] = u_mvp * vertex[line_i+i].position;
         va[i].xyz /= va[i].w;
         va[i].xy = (va[i].xy + 1.0) * 0.5 * u_resolution;
     }
@@ -31,6 +39,8 @@ void main()
     vec4 pos;
     if (tri_i == 0 || tri_i == 1 || tri_i == 3)
     {
+        color = vertex[line_i+1].color;
+
         vec2 v_pred  = normalize(va[1].xy - va[0].xy);
         vec2 v_miter = normalize(nv_line + vec2(-v_pred.y, v_pred.x));
 
@@ -42,6 +52,8 @@ void main()
     }
     else
     {
+        color = vertex[line_i+2].color;
+
         vec2 v_succ  = normalize(va[3].xy - va[2].xy);
         vec2 v_miter = normalize(nv_line + vec2(-v_succ.y, v_succ.x));
 

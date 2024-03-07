@@ -5,8 +5,10 @@ uniform vec2 u_resolution;
 
 in vec2 texCoord;
 
+in vec4 color;
+
 void main()
 {
 
-    fragColor = vec4(texCoord,1,1);
+    fragColor = color;
 }
