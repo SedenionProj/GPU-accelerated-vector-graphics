@@ -23,17 +23,30 @@ int main()
 
 	Seden::PerspectiveCamera cam(aspect);
 
+	//std::vector<glm::vec4> varray{
+	//	{-1,1,0,1},
+	//	{-0.5,0,0,1} ,
+	//	{0.5,0,0,1}  ,
+	//	{0.5,0,1,1},
+	//	{0.5,1,1,1},
+	//	{1,1,1,1} };
+
 	std::vector<vertex> varray {
-		{{-1,0,0,1},   {1,0,0,1}},
-		{{-0.5,0,0,1}, {1,0,0,1}},
-		{{0.5,0,0,1},  {0,1,0,1}},
+		{{-1,0,0,1}, {1,0,0,1}  },
+		{{-0.5,0,0,1} ,  {1,0,0,1}},
+		{{0.5,0,0,1}  ,  {1,0,0,1}},
 		{{0.5,0,1,1},  {0,0,1,1}},
 		{{0.5,1,1,1},  {1,0,0,1}},
-		{{0.5,2,1,1},  {1,0,0,1}}
+		{{1.5,2,1,1},   {1,0,0,1}      }
 	};
 
 	Path path(varray, 10);
 
+	std::vector<Line> lineArr;
+
+	for (int i = 0; i<1;i++)
+		lineArr.push_back(Line(vertex({ {rand() % 100 - 50,rand() % 100 - 50,rand() % 100 - 50,1},
+				 {1,0,0,1} }), vertex({ {rand() % 100 - 50,rand() % 100 - 50,rand() % 100 - 50,1},  {1,0,0,1} })));
 
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
@@ -41,20 +54,28 @@ int main()
 
 	float t = 0.0;
 	
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	
+	
+	std::vector<vertex> l2p({
+		{ {-1  ,1,-1,1}, {1,0,0,1} },
+		{ { 0.5,0,-1,1}, {1,0,0,1} },
+		{ { 0.5,1,-2.5,1}, {1,0,0,1} },
+		{ { 1  ,0,-1,1}, {1,0,0,1} } });
+
+	Path l2(l2p,10);
+
 	float begin=0;
 	float end = 1;
 	while (Seden::win::isRunning())
 	{
 		Seden::win::clear();
 		Seden::win::clearGui();
-		
+		glm::vec4 test = glm::vec4(0.5, 1, 1, 1)*cam.getProjectionMatrix() * cam.getViewMatrix() ;
 		ImGui::Begin("test");
 		ImGui::Text(std::to_string(glfwGetTime()).c_str());
+		ImGui::Text(std::to_string(test.w).c_str());
 		if (ImGui::Button("press")) {
-			
-			
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
 		else
 		{
@@ -72,15 +93,24 @@ int main()
 
 		basicSh.Bind();
 		basicSh.setMat4("u_mvp", cam.getProjectionMatrix()*cam.getViewMatrix());
-		basicSh.setVec2("u_resolution", {1280* glm::length(cam.getPosition()), 720 * glm::length(cam.getPosition())});
-		basicSh.setFloat("u_thickness", 25);
+		basicSh.setVec2("u_resolution", {1280, 720});
+		//basicSh.setVec2("u_resolution", {1280* glm::length(cam.getPosition()), 720 * glm::length(cam.getPosition())});
+		basicSh.setFloat("u_thickness", 5);
 
+		for (int i = 0; i < 1; i++) {
+			lineArr[i].trimBegin(begin);
+			lineArr[i].trimEnd(end);
+			//lineArr[i].draw();
+		}
+
+		
+		l2.trimBegin(begin);
+		l2.trimEnd(end);
+		l2.draw();
+
+		
 		path.trimBegin(begin);
 		path.trimEnd(end);
-
-
-
-
 		path.draw();
 
 		
@@ -97,8 +127,8 @@ int main()
 
 void processInput(Seden::PerspectiveCamera& camera, GLFWwindow* window)
 {
-	const float cameraSpeed = 5.f * Seden::win::getDeltaTime();
-	const float sensitivity = 2.f * Seden::win::getDeltaTime();
+	const float cameraSpeed = 2.f * Seden::win::getDeltaTime();
+	const float sensitivity = 1.f * Seden::win::getDeltaTime();
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.moveFront(cameraSpeed);

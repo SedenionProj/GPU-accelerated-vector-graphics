@@ -17,7 +17,7 @@ GLuint CreateSSBO(const std::vector<vertex>& varray)
 class Path {
 public:
 	Path() = default;
-
+		
 	Path(const std::vector<vertex>& vert, float tickness){
 		init(vert);
 	}
@@ -31,7 +31,7 @@ public:
 		glDrawArrays(GL_TRIANGLES, triangles_begin_nb, triangles_end_nb - triangles_begin_nb);
 	}
 
-	void update(int pos, const vertex& data) {
+	void update(int pos, const vertex& data) { 
 		vertices[pos] = data;
 		computeLength(); // can be optimized
 		updatePath(pos, data);
@@ -189,7 +189,17 @@ protected:
 	int ssbo;
 };
 
-
+class Line : public Path{
+public:
+	Line(const vertex& a, const vertex& b) {
+		std::vector<vertex> vert;
+		vert.push_back({a.position + (a.position-b.position)});
+		vert.push_back(a);
+		vert.push_back(b);
+		vert.push_back({b.position + (b.position - a.position)});
+		init(vert);
+	}
+};
 
 //class CurvesAndLines : public Path {
 //public:

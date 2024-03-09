@@ -29,8 +29,7 @@ void main()
     for (int i=0; i<4; ++i)
     {
         va[i] = u_mvp * vertex[line_i+i].position;
-        va[i].xyz /= va[i].w;
-        va[i].xy = (va[i].xy + 1.0) * 0.5 * u_resolution;
+        va[i].xyz /= abs(va[i].w);
     }
 
     vec2 v_line  = normalize(va[2].xy - va[1].xy);
@@ -48,7 +47,7 @@ void main()
 
         float angle = dot(v_miter, nv_line);
 
-        pos.xy += v_miter * u_thickness * (tri_i == 1 ? -0.5 : 0.5) / max(angle, 0.2); // temp miter fix 
+        pos.xy += 0.01*v_miter * u_thickness * (tri_i == 1 ? -0.5 : 0.5) / max(angle, 0.2); // temp miter fix 
     }
     else
     {
@@ -61,13 +60,12 @@ void main()
 
         float angle = dot(v_miter, nv_line);
 
-        pos.xy += v_miter * u_thickness * (tri_i == 5 ? 0.5 : -0.5) / max(angle, 0.2);
+        pos.xy += 0.01*v_miter * u_thickness * (tri_i == 5 ? 0.5 : -0.5) / max(angle, 0.2);
     }
 
     
 
-    pos.xy = pos.xy / u_resolution * 2.0 - 1.0;
-    pos.xyz *= pos.w;
+    pos.xyz *= abs(pos.w);
     gl_Position = pos;
 
     texCoord = pos.xy;
