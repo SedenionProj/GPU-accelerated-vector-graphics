@@ -22,6 +22,11 @@ public:
 		init(vert);
 	}
 
+	~Path() {
+		//SEDEN_INFO("called")
+		glDeleteBuffers(1, &ssbo);
+	}
+
 	void draw() {
 		if (tPathEnd <= tPathBegin) return; // temp fix
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo);
@@ -186,7 +191,8 @@ protected:
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(vertex) * pos, sizeof(vertex), &data);
 	}
 	std::vector<vertex> vertices;
-	int ssbo;
+public:
+	GLuint ssbo;
 };
 
 class Line : public Path{

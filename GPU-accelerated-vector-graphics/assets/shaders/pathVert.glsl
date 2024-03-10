@@ -47,7 +47,7 @@ void main()
 
         float angle = dot(v_miter, nv_line);
 
-        pos.xy += 0.01*v_miter * u_thickness * (tri_i == 1 ? -0.5 : 0.5) / max(angle, 0.2); // temp miter fix 
+        pos.xy += 0.001*v_miter * u_thickness * (tri_i == 1 ? -0.5 : 0.5) / max(angle, 0.2); // temp miter fix 
     }
     else
     {
@@ -60,7 +60,7 @@ void main()
 
         float angle = dot(v_miter, nv_line);
 
-        pos.xy += 0.01*v_miter * u_thickness * (tri_i == 5 ? 0.5 : -0.5) / max(angle, 0.2);
+        pos.xy += 0.001*v_miter * u_thickness * (tri_i == 5 ? 0.5 : -0.5) / max(angle, 0.2);
     }
 
     
